@@ -1,12 +1,18 @@
-﻿#NoEnv
+#NoEnv
 #SingleInstance Force
 EnvGet, LocalAppData, LOCALAPPDATA
 SetWorkingDir %A_ScriptDir%
 settingsFilePath := A_ScriptDir "\settings.ini"
 
+
 ROBLOX_LOGS := LocalAppData "\Roblox\logs\*.log"
+logDir := LocalAppData "\Roblox\logs"
 biome := ""
 prevBiome := "None"
+running := false
+runTimeTick := 0
+runTime := 0
+runTimeDisplay := 0
 
 if (biomeData = "") {
     biomeData := {}
@@ -29,7 +35,7 @@ if (biomeData = "") {
     biomeData["GRAVEYARD"]    := {color: 0, thumbnail: "https://cdn.mongoosee.com/assets/biomes/GRAVEYARD.png"}
     biomeData["PUMPKIN MOON"] := {color: 0, thumbnail: "https://cdn.mongoosee.com/assets/biomes/PUMPKIN%20MOON.png"}
     biomeData["BLOOD RAIN"]   := {color: 0, thumbnail: "https://cdn.mongoosee.com/assets/biomes/BLOOD%20RAIN.png"}
-    biomeData["INCINERATOR"]   := {color: 10373176, thumbnail: "https://cdn.mongoosee.com/assets/biomes/INCINERATOR.png"}
+    biomeData["INCINERATOR"]   := {color: 10373176, thumbnail: ""}
 }
 
 if (FileExist(settingsFilePath)) {
@@ -48,7 +54,7 @@ if (FileExist(settingsFilePath)) {
 Gui, Color, 041024
 Gui, Font, s30 cWhite Bold, Segoe UI
 Gui, Font, s14 cWhite Bold, Segoe UI
-Gui, Add, Text, x35 y15 w600 h30 BackgroundTrans c0xFFAA00, aery's biome macro V1
+Gui, Add, Text, x35 y15 w600 h30 BackgroundTrans c0xFFAA00, aery's biome macro v1.1
 Gui, Font, s9 cWhite Normal, Segoe UI
 Gui, Color, 041024
 Gui, Font, s10 cWhite Normal Bold
@@ -71,11 +77,11 @@ Gui, Font, s11 cWhite Bold, Segoe UI
 Gui, Add, Button, x35 y225 w70 h35 gStartScript vStartBtn c0x00AA00 +0x8000, Start
 Gui, Add, Button, x115 y225 w70 h35 gStopScript vStopBtn Disabled c0xFF4444 +0x8000, Stop
 
-Gui, Show, w500 h280,  aery's biome macro v1
+Gui, Show, w500 h280,  aery's biome macro v1.1
 return
 
 GuiClose:
-ExitApp
+GoSub, StopScript
 
 UpdatePrivateServer:
     Gui, Submit, NoHide
@@ -100,8 +106,7 @@ ClearLogs:
 return
 
 BiomeDetect:
-global webhookURL, biome, prevBiome
-logDir := LocalAppData "\Roblox\logs"
+global webhookURL, biome, prevBiome, logDir, runTime
 
     newestTime := 0
     newestFile := ""
@@ -121,7 +126,7 @@ logDir := LocalAppData "\Roblox\logs"
         return
 
     size := file.Length
-    chunkSize := 10240
+    chunkSize := 51200
     if (size > chunkSize)
         file.Seek(-chunkSize, 2)
     content := file.Read()
@@ -143,8 +148,10 @@ logDir := LocalAppData "\Roblox\logs"
     }
 
     if (biome && biome != "" && biome != prevBiome) {
+        runTime := runTimeTick ? (A_TickCount - runTimeTick) // 1000 : 0
+        runTimeDisplay := FormatRuntime(runTime)
         ; end webhook
-        if ((prevBiome != "" && prevBiome != "Normal") || (prevBiome = "GLITCHED" || prevBiome = "DREAMSPACE" || prevBiome = "CYBERSPACE" || prevBiome = "SINGULARITY") && (biome != prevBiome)) {
+        if ((prevBiome != "" && prevBiome != "Normal") && (biome != prevBiome)) {
             if (biomeData.HasKey(prevBiome)) {
                 endColor := biomeData[prevBiome].color
             }
@@ -154,7 +161,7 @@ logDir := LocalAppData "\Roblox\logs"
             endwebhookUnix := A_NowUTC
             EnvSub, endwebhookUnix, 19700101000000, Seconds
 
-            enddescription := "> ### Biome Ended - " prevBiome " "
+            enddescription := "> ### Biome Ended - " prevBiome "\n> " runTimeDisplay " " 
 
             endJson := "{"
             . """embeds"": ["
@@ -162,23 +169,22 @@ logDir := LocalAppData "\Roblox\logs"
             . "    ""title"": ""<t:" endwebhookUnix ":F> (<t:" endwebhookUnix ":R>)"","
             . "    ""description"": """ enddescription ""","
             . "    ""color"": " biomeColor ","
-            . "    ""footer"": {""text"": ""aery's biome macro | v1"", ""icon_url"": ""https://raw.githubusercontent.com/knowaery/Aery-s-Fishsol/files/img/aery.png""},"
+            . "    ""footer"": {""text"": ""aery's biome macro | v1.1"", ""icon_url"": ""https://raw.githubusercontent.com/knowaery/Aery-s-Fishsol/files/img/aery.png""},"
             . "    ""timestamp"": """ endTimestamp """"
             . "  }"
             . "],"
             . """content"": """""
             . "}"
 
-            endHttp := ComObjCreate("WinHttp.WinHttpRequest.5.1")
-            endHttp.Open("POST", webhookURL, false)
-            endHttp.SetRequestHeader("Content-Type", "application/json")
-            endHttp.Send(endJson)
+            try endHttp := ComObjCreate("WinHttp.WinHttpRequest.5.1")
+            try endHttp.Open("POST", webhookURL, false)
+            try endHttp.SetRequestHeader("Content-Type", "application/json")
+            try endHttp.Send(endJson)
         }
 
         
         ; start webhook
-        if ((biome != "" || biome = "GLITCHED" || biome = "DREAMSPACE" || biome = "CYBERSPACE" || biome = "SINGULARITY") && biome != "Normal") {
-
+        if ((biome != "" || biome = "GLITCHED" || biome = "DREAMSPACE" || biome = "CYBERSPACE" || biome = "SINGULARITY") && biome != "NORMAL") {
             if (biomeData.HasKey(biome)) {
                 biomeColor    := biomeData[biome].color
                 thumbnail_url := biomeData[biome].thumbnail
@@ -190,13 +196,20 @@ logDir := LocalAppData "\Roblox\logs"
             EnvSub, startwebhookUnix, 19700101000000, Seconds
 
 
-            if (biome = "GLITCHED" || biome = "DREAMSPACE" || biome = "CYBERSPACE") {
-                content := "@everyone"
+            if (biome = "GLITCHED" || biome = "DREAMSPACE" || biome = "CYBERSPACE") && (state != "In Main Menu") {
+                content := "<@everyone>"
+            } else if (biome = "GLITCHED" || biome = "DREAMSPACE" || biome = "CYBERSPACE") && (state = "In Main Menu") {
+                SetTimer, BiomeDetect, Off
+                StopMacroWebhook()
+                running := false
+                MsgBox, 16, Error, Rare Biome deteced whilst being in Main Menu. The macro has automatically closed.
+                ExitApp
+                return
             } else {
                 content := ""
             }
 
-            description := "> ## Biome Started - " biome "\n> ### [Join Server](" privateServerLink ")  "
+            description := "> ## Biome Started - " biome "\n> ### [Join Server](" privateServerLink ")\n> " runTimeDisplay "  "
 
             json := "{"
             . """embeds"": ["
@@ -205,35 +218,24 @@ logDir := LocalAppData "\Roblox\logs"
             . "    ""description"": """ description ""","
             . "    ""color"": " biomeColor ","
             . "    ""thumbnail"": {""url"": """ thumbnail_url """},"
-            . "    ""footer"": {""text"": ""aery's biome macro | v1"", ""icon_url"": ""https://raw.githubusercontent.com/knowaery/Aery-s-Fishsol/files/img/aery.png""},"
+            . "    ""footer"": {""text"": ""aery's biome macro | v1.1"", ""icon_url"": ""https://raw.githubusercontent.com/knowaery/Aery-s-Fishsol/files/img/aery.png""},"
             . "    ""timestamp"": """ startTimestamp """"
             . "  }"
             . "],"
             . """content"": """ content """"
             . "}"
 
-            http := ComObjCreate("WinHttp.WinHttpRequest.5.1")
-            http.Open("POST", webhookURL, false)
-            http.SetRequestHeader("Content-Type", "application/json")
-            http.Send(json)
+            try http := ComObjCreate("WinHttp.WinHttpRequest.5.1")
+            try http.Open("POST", webhookURL, false)
+            try http.SetRequestHeader("Content-Type", "application/json")
+            try http.Send(json)
         }
         prevBiome := biome
     }
 return
 
-
-F1::
-    GoSub, StartScript
-return
-
-F2::
-    GoSub, StopScript
-return
-
-StartScript:
-global webhookURL
-SetTimer, BiomeDetect, 1000
-
+StartMacroWebhook() {
+    global webhookURL
     if (!InStr(webhookURL, "discord"))
         return
 
@@ -242,15 +244,13 @@ SetTimer, BiomeDetect, 1000
     content := ""
     color := 7909721
 
-
-
     json := "{"
     . """content"": """ content ""","
     . """embeds"": [{"
     . """title"": "":green_circle: Macro Started!"","
     . """color"": " color ","
     . """footer"": {"
-    . """text"": ""aery's biome macro | v1"","
+    . """text"": ""aery's biome macro | v1.1"","
     . """icon_url"": ""https://raw.githubusercontent.com/knowaery/Aery-s-Fishsol/files/img/aery.png"""
     . "},"
     . """timestamp"": """ timestamp """"
@@ -261,15 +261,10 @@ SetTimer, BiomeDetect, 1000
     try http.Open("POST", webhookURL, false)
     try http.SetRequestHeader("Content-Type", "application/json")
     try http.Send(json)
+}
 
-    GuiControl, Disable, StartBtn
-    GuiControl, Enable, StopBtn
-Return
-
-StopScript:
-global webhookURL
-SetTimer, BiomeDetect, Off
-
+StopMacroWebhook() {
+    global webhookURL
     if (!InStr(webhookURL, "discord"))
     return
 
@@ -284,17 +279,59 @@ SetTimer, BiomeDetect, Off
     . """title"": "":red_circle: Macro Stopped!"","
     . """color"": " color ","
     . """footer"": {"
-    . """text"": ""aery's biome macro | v1"","
+    . """text"": ""aery's biome macro | v1.1"","
     . """icon_url"": ""https://raw.githubusercontent.com/knowaery/Aery-s-Fishsol/files/img/aery.png"""
     . "},"
     . """timestamp"": """ timestamp """"
     . "}]"
     . "}"
 
-    http := ComObjCreate("WinHttp.WinHttpRequest.5.1")
-    http.Open("POST", webhookURL, false)
-    http.SetRequestHeader("Content-Type", "application/json")
-    http.Send(json)
-    sleep, 25
+    try http := ComObjCreate("WinHttp.WinHttpRequest.5.1")
+    try http.Open("POST", webhookURL, false)
+    try http.SetRequestHeader("Content-Type", "application/json")
+    try http.Send(json)
+}
+
+F1::
+    GoSub, StartScript
+return
+
+F2::
+    GoSub, StopScript
+return
+
+StartScript:
+if (running)
+    return
+
+running := true
+    SetTimer, BiomeDetect, 1000
+    StartMacroWebhook()
+    GuiControl, Disable, StartBtn
+    GuiControl, Enable, StopBtn
+    runTimeTick := A_TickCount
+return
+
+StopScript:
+if (!running)
+    ExitApp
+
+running := false
+    SetTimer, BiomeDetect, Off
+
+    StopMacroWebhook()
     ExitApp
 return
+
+FormatRuntime(runTime) {
+    h := runTime // 3600
+    m := Mod(runTime, 3600) // 60
+    s := Mod(runTime, 60)
+    out := ""
+    if (h > 0)
+        out .= h "hr "
+    if (h > 0 || m > 0)
+        out .= m "m "
+    out .= s "s"
+    return "Runtime: " out
+}
