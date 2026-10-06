@@ -1,2 +1,4 @@
 # aery-s-biome-macro
-inspiration from maxstellar's Biome Macro
+Inspiration from maxstellar's Biome Macro
+
+Credits to @mongooseee for the biome images in the webhooks
