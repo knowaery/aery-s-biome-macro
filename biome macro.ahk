@@ -13,6 +13,7 @@ running := false
 runTimeTick := 0
 runTime := 0
 runTimeDisplay := 0
+displayRuntime := false
 
 if (biomeData = "") {
     biomeData := {}
@@ -49,12 +50,17 @@ if (FileExist(settingsFilePath)) {
     {
         privateServerLink := tempPrivateServerLink
     }
+    IniRead, tempDisplayRuntime, %settingsFilePath%, Macro, displayRuntime
+    if (tempDisplayRuntime != "ERROR")
+    {
+        displayRuntime := tempDisplayRuntime
+    }
 }
 
 Gui, Color, 041024
 Gui, Font, s30 cWhite Bold, Segoe UI
-Gui, Font, s14 cWhite Bold, Segoe UI
-Gui, Add, Text, x35 y15 w600 h30 BackgroundTrans c0xFFAA00, aery's biome macro v1.1
+Gui, Font, s15 cWhite Bold, Segoe UI
+Gui, Add, Text, x35 y13 w600 h30 BackgroundTrans c0xFFAA00 vTitleText, aery's biome macro v1.2
 Gui, Font, s9 cWhite Normal, Segoe UI
 Gui, Color, 041024
 Gui, Font, s10 cWhite Normal Bold
@@ -70,14 +76,32 @@ Gui, Add, Edit, x35 y135 w415 h25 vWebhookInput gUpdateWebhook Background0xD3D3D
 Gui, Font, s8 c0xCCCCCC Normal
 Gui, Add, Text, x35 y160 w500 h15 BackgroundTrans, Paste your Discord Webhook URL here.
 
-Gui, Font, s10 cWhite Bold, Segoe UI
+Gui, Font, s11 cWhite Bold, Segoe UI
 Gui, Add, Button, x35 y185 w150 h25 gClearLogs, Clear Roblox Logs
 
 Gui, Font, s11 cWhite Bold, Segoe UI
-Gui, Add, Button, x35 y225 w70 h35 gStartScript vStartBtn c0x00AA00 +0x8000, Start
-Gui, Add, Button, x115 y225 w70 h35 gStopScript vStopBtn Disabled c0xFF4444 +0x8000, Stop
+Gui, Add, GroupBox, x33 y215 w350 h68 cWhite, Show Runtime
+Gui, Font, s10 c0xCCCCCC Normal
+Gui, Add, Text, x43 y231 w515 h135 BackgroundTrans, Displays your macro's runtime via the biome webhooks.
+Gui, Font, s10 cWhite Bold, Segoe UI
+Gui, Add, Button, x43 y251 w80 h25 gToggleDisplayRuntime vDisplayRuntimeBtn, Toggle
+Gui, Font, s10 c0xCCCCCC Bold, Segoe UI
+Gui, Add, Text, x133 y253 w70 h25 vDisplayRuntimeStatus BackgroundTrans, OFF
 
-Gui, Show, w500 h280,  aery's biome macro v1.1
+Gui, Font, s13 cWhite Bold, Segoe UI
+Gui, Add, Button, x35 y295 w70 h35 gStartScript vStartBtn c0x00AA00 +0x8000, Start
+Gui, Add, Button, x115 y295 w70 h35 gStopScript vStopBtn Disabled c0xFF4444 +0x8000, Stop
+
+if (displayRuntime) {
+    GuiControl,, DisplayRuntimeStatus, ON
+    GuiControl, +c0x00DD00, DisplayRuntimeStatus
+} else {
+    GuiControl,, DisplayRuntimeStatus, OFF
+    GuiControl, +c0xFF4444, DisplayRuntimeStatus
+}
+
+Gui, Show, w500 h350,  aery's biome macro v1.2
+GuiControl, Focus, StartBtn
 return
 
 GuiClose:
@@ -93,6 +117,18 @@ UpdateWebhook:
     Gui, Submit, nohide
     webhookURL := WebhookInput
     IniWrite, %webhookURL%, %settingsFilePath%, Macro, webhookURL
+return
+
+ToggleDisplayRuntime:
+    displayRuntime := !displayRuntime
+    if (displayRuntime) {
+        GuiControl,, DisplayRuntimeStatus, ON
+        GuiControl, +c0x00DD00, DisplayRuntimeStatus
+    } else {
+        GuiControl,, DisplayRuntimeStatus, OFF
+        GuiControl, +c0xFF4444, DisplayRuntimeStatus
+    }
+    IniWrite, % (displayRuntime ? "true" : "false"), %settingsFilePath%, Macro, displayRuntime
 return
 
 ClearLogs:
@@ -126,7 +162,7 @@ global webhookURL, biome, prevBiome, logDir, runTime
         return
 
     size := file.Length
-    chunkSize := 51200
+    chunkSize := 10240
     if (size > chunkSize)
         file.Seek(-chunkSize, 2)
     content := file.Read()
@@ -161,7 +197,11 @@ global webhookURL, biome, prevBiome, logDir, runTime
             endwebhookUnix := A_NowUTC
             EnvSub, endwebhookUnix, 19700101000000, Seconds
 
-            enddescription := "> ### Biome Ended - " prevBiome "\n> " runTimeDisplay " " 
+            if (displayRuntime) {
+                enddescription := "> ### Biome Ended - " prevBiome "\n> " runTimeDisplay " " 
+            } else {
+                    enddescription := "> ### Biome Ended - " prevBiome " "
+            }
 
             endJson := "{"
             . """embeds"": ["
@@ -169,7 +209,7 @@ global webhookURL, biome, prevBiome, logDir, runTime
             . "    ""title"": ""<t:" endwebhookUnix ":F> (<t:" endwebhookUnix ":R>)"","
             . "    ""description"": """ enddescription ""","
             . "    ""color"": " biomeColor ","
-            . "    ""footer"": {""text"": ""aery's biome macro | v1.1"", ""icon_url"": ""https://raw.githubusercontent.com/knowaery/Aery-s-Fishsol/files/img/aery.png""},"
+            . "    ""footer"": {""text"": ""aery's biome macro | v1.2"", ""icon_url"": ""https://raw.githubusercontent.com/knowaery/Aery-s-Fishsol/files/img/aery.png""},"
             . "    ""timestamp"": """ endTimestamp """"
             . "  }"
             . "],"
@@ -209,7 +249,11 @@ global webhookURL, biome, prevBiome, logDir, runTime
                 content := ""
             }
 
-            description := "> ## Biome Started - " biome "\n> ### [Join Server](" privateServerLink ")\n> " runTimeDisplay "  "
+            if (displayRuntime) {
+                description := "> ## Biome Started - " biome "\n> ### [Join Server](" privateServerLink ")\n> " runTimeDisplay "  "
+            } else {
+                description := "> ## Biome Started - " biome "\n> ### [Join Server](" privateServerLink ")  "
+            }
 
             json := "{"
             . """embeds"": ["
@@ -218,7 +262,7 @@ global webhookURL, biome, prevBiome, logDir, runTime
             . "    ""description"": """ description ""","
             . "    ""color"": " biomeColor ","
             . "    ""thumbnail"": {""url"": """ thumbnail_url """},"
-            . "    ""footer"": {""text"": ""aery's biome macro | v1.1"", ""icon_url"": ""https://raw.githubusercontent.com/knowaery/Aery-s-Fishsol/files/img/aery.png""},"
+            . "    ""footer"": {""text"": ""aery's biome macro | v1.2"", ""icon_url"": ""https://raw.githubusercontent.com/knowaery/Aery-s-Fishsol/files/img/aery.png""},"
             . "    ""timestamp"": """ startTimestamp """"
             . "  }"
             . "],"
@@ -250,7 +294,7 @@ StartMacroWebhook() {
     . """title"": "":green_circle: Macro Started!"","
     . """color"": " color ","
     . """footer"": {"
-    . """text"": ""aery's biome macro | v1.1"","
+    . """text"": ""aery's biome macro | v1.2"","
     . """icon_url"": ""https://raw.githubusercontent.com/knowaery/Aery-s-Fishsol/files/img/aery.png"""
     . "},"
     . """timestamp"": """ timestamp """"
@@ -264,22 +308,30 @@ StartMacroWebhook() {
 }
 
 StopMacroWebhook() {
-    global webhookURL
+    global webhookURL, displayRuntime, runTimeTick
     if (!InStr(webhookURL, "discord"))
-    return
+        return
 
     endMacroTime := A_NowUTC
     timestamp := SubStr(endMacroTime,1,4) "-" SubStr(endMacroTime,5,2) "-" SubStr(endMacroTime,7,2) "T" SubStr(endMacroTime,9,2) ":" SubStr(endMacroTime,11,2) ":" SubStr(endMacroTime,13,2) ".000Z"
     content := ""
-    color := 0
+    color := 14495300
+
+    if (displayRuntime) {
+        totalRuntime := FormatRuntime((A_TickCount - runTimeTick) // 1000)
+        description := "> Total " totalRuntime "  "
+    } else {
+        description := ""
+    }
 
     json := "{"
     . """content"": """ content ""","
     . """embeds"": [{"
     . """title"": "":red_circle: Macro Stopped!"","
+    . """description"": """ description ""","
     . """color"": " color ","
     . """footer"": {"
-    . """text"": ""aery's biome macro | v1.1"","
+    . """text"": ""aery's biome macro | v1.2"","
     . """icon_url"": ""https://raw.githubusercontent.com/knowaery/Aery-s-Fishsol/files/img/aery.png"""
     . "},"
     . """timestamp"": """ timestamp """"
@@ -292,14 +344,6 @@ StopMacroWebhook() {
     try http.Send(json)
 }
 
-F1::
-    GoSub, StartScript
-return
-
-F2::
-    GoSub, StopScript
-return
-
 StartScript:
 if (running)
     return
@@ -309,6 +353,9 @@ running := true
     StartMacroWebhook()
     GuiControl, Disable, StartBtn
     GuiControl, Enable, StopBtn
+    GuiControl,, TitleText, aery's biome macro v1.2 (running)
+    WinSetTitle, aery's biome macro v1.2, , aery's biome macro v1.2 (running)
+    GuiControl, Focus, StopBtn
     runTimeTick := A_TickCount
 return
 
