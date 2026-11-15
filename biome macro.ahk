@@ -3,41 +3,47 @@
 EnvGet, LocalAppData, LOCALAPPDATA
 SetWorkingDir %A_ScriptDir%
 settingsFilePath := A_ScriptDir "\settings.ini"
-
-
 ROBLOX_LOGS := LocalAppData "\Roblox\logs\*.log"
 logDir := LocalAppData "\Roblox\logs"
 biome := ""
 prevBiome := "None"
 running := false
+paused := false
 runTimeTick := 0
 runTime := 0
+pausedTick := 0
+pausedTotal := 0
 runTimeDisplay := 0
 displayRuntime := false
 
 if (biomeData = "") {
     biomeData := {}
-    biomeData["NORMAL"]       := {color: 0,         thumbnail: "https://cdn.mongoosee.com/assets/biomes/NORMAL.png"}
-    biomeData["WINDY"]        := {color: 10150399,  thumbnail: "https://cdn.mongoosee.com/assets/biomes/WINDY.png"}
-    biomeData["RAINY"]        := {color: 163773,    thumbnail: "https://cdn.mongoosee.com/assets/biomes/RAINY.png"}
-    biomeData["SNOWY"]        := {color: 14479353,  thumbnail: "https://cdn.mongoosee.com/assets/biomes/SNOWY.png"}
-    biomeData["SAND STORM"]   := {color: 9401431,   thumbnail: "https://cdn.mongoosee.com/assets/biomes/SAND%20STORM.png"}
-    biomeData["HELL"]         := {color: 16730905,  thumbnail: "https://cdn.mongoosee.com/assets/biomes/HELL.png"}
-    biomeData["STARFALL"]     := {color: 72375,     thumbnail: "https://cdn.mongoosee.com/assets/biomes/STARFALL.png"}
-    biomeData["CORRUPTION"]   := {color: 7155368,   thumbnail: "https://cdn.mongoosee.com/assets/biomes/CORRUPTION.png"}
-    biomeData["NULL"]         := {color: 8618883,   thumbnail: "https://cdn.mongoosee.com/assets/biomes/NULL.png"}
-    biomeData["GLITCHED"]     := {color: 12582656,  thumbnail: "https://cdn.mongoosee.com/assets/biomes/GLITCHED.png"}
-    biomeData["DREAMSPACE"]   := {color: 15376858,  thumbnail: "https://cdn.mongoosee.com/assets/biomes/DREAMSPACE.png"}
-    biomeData["HEAVEN"]       := {color: 16769184,  thumbnail: "https://cdn.mongoosee.com/assets/biomes/HEAVEN.png"}
-    biomeData["CYBERSPACE"]   := {color: 663101,    thumbnail: "https://cdn.mongoosee.com/assets/biomes/CYBERSPACE.png"}
-    biomeData["SINGULARITY"]  := {color: 13582371,  thumbnail: "https://cdn.mongoosee.com/assets/biomes/SINGULARITY.png"}
-    biomeData["BLAZING SUN"]  := {color: 16106050,  thumbnail: "https://cdn.mongoosee.com/assets/biomes/BLAZING%20SUN.png"}
-    biomeData["AURORA"]       := {color: 9065205, thumbnail: "https://cdn.mongoosee.com/assets/biomes/AURORA.png"}
-    biomeData["GRAVEYARD"]    := {color: 0, thumbnail: "https://cdn.mongoosee.com/assets/biomes/GRAVEYARD.png"}
-    biomeData["PUMPKIN MOON"] := {color: 0, thumbnail: "https://cdn.mongoosee.com/assets/biomes/PUMPKIN%20MOON.png"}
-    biomeData["BLOOD RAIN"]   := {color: 0, thumbnail: "https://cdn.mongoosee.com/assets/biomes/BLOOD%20RAIN.png"}
-    biomeData["INCINERATOR"]   := {color: 10373176, thumbnail: ""}
+    biomeData["NORMAL"]       := {color: 0,         thumbnail: "https://cdn.solsstattracker.com/biomes/NORMAL.png"}
+    biomeData["WINDY"]        := {color: 10150399,  thumbnail: "https://cdn.solsstattracker.com/biomes/WINDY.png"}
+    biomeData["RAINY"]        := {color: 163773,    thumbnail: "https://cdn.solsstattracker.com/biomes/RAINY.png"}
+    biomeData["SNOWY"]        := {color: 14479353,  thumbnail: "https://cdn.solsstattracker.com/biomes/SNOWY.png"}
+    biomeData["SAND STORM"]   := {color: 9401431,   thumbnail: "https://cdn.solsstattracker.com/biomes/SAND%20STORM.png"}
+    biomeData["HELL"]         := {color: 16730905,  thumbnail: "https://cdn.solsstattracker.com/biomes/HELL.png"}
+    biomeData["STARFALL"]     := {color: 72375,     thumbnail: "https://cdn.solsstattracker.com/biomes/STARFALL.png"}
+    biomeData["CORRUPTION"]   := {color: 7155368,   thumbnail: "https://cdn.solsstattracker.com/biomes/CORRUPTION.png"}
+    biomeData["NULL"]         := {color: 8618883,   thumbnail: "https://cdn.solsstattracker.com/biomes/NULL.png"}
+    biomeData["GLITCHED"]     := {color: 12582656,  thumbnail: "https://cdn.solsstattracker.com/biomes/GLITCHED.png"}
+    biomeData["DREAMSPACE"]   := {color: 15376858,  thumbnail: "https://cdn.solsstattracker.com/biomes/DREAMSPACE.png"}
+    biomeData["HEAVEN"]       := {color: 16769184,  thumbnail: "https://cdn.solsstattracker.com/biomes/HEAVEN.png"}
+    biomeData["CYBERSPACE"]   := {color: 663101,    thumbnail: "https://cdn.solsstattracker.com/biomes/CYBERSPACE.png"}
+    biomeData["SINGULARITY"]  := {color: 13582371,  thumbnail: "https://cdn.solsstattracker.com/biomes/SINGULARITY.png"}
+    biomeData["BLAZING SUN"]  := {color: 16106050,  thumbnail: "https://cdn.solsstattracker.com/biomes/BLAZING%20SUN.png"}
+    biomeData["AURORA"]       := {color: 9065205,   thumbnail: "https://cdn.solsstattracker.com/biomes/AURORA.png"}
+    biomeData["GRAVEYARD"]    := {color: 8421504,   thumbnail: "https://cdn.solsstattracker.com/biomes/GRAVEYARD.png"}
+    biomeData["PUMPKIN MOON"] := {color: 14912571,  thumbnail: "https://cdn.solsstattracker.com/biomes/PUMPKIN%20MOON.png"}
+    biomeData["BLOOD RAIN"]   := {color: 12847366,  thumbnail: "https://cdn.solsstattracker.com/biomes/BLOOD%20RAIN.png"}
+    biomeData["INCINERATOR"]  := {color: 10373176,  thumbnail: "https://cdn.solsstattracker.com/biomes/INCINERATOR.png"}
+    biomeData["LOST FOREST"]  := {color : 671781,   thumbnail: "https://cdn.solsstattracker.com/biomes/LOST%20FOREST.png"}
+    biomeData["THE RADIANT FOREST"] := {color: 9122490, thumbnail: "https://cdn.solsstattracker.com/biomes/THE%20RADIANT%20FOREST.png"}
 }
+
+subBiomes := ["SINGULARITY", "THE RADIANT FOREST"]
+rareBiomes := ["GLITCHED", "DREAMSPACE", "CYBERSPACE"]
 
 if (FileExist(settingsFilePath)) {
     IniRead, tempWebhookURL, %settingsFilePath%, Macro, webhookURL
@@ -53,44 +59,50 @@ if (FileExist(settingsFilePath)) {
     IniRead, tempDisplayRuntime, %settingsFilePath%, Macro, displayRuntime
     if (tempDisplayRuntime != "ERROR")
     {
-        displayRuntime := tempDisplayRuntime
+        displayRuntime := (tempDisplayRuntime = "true" || tempDisplayRuntime = 1)
     }
 }
 
-Gui, Color, 041024
-Gui, Font, s30 cWhite Bold, Segoe UI
-Gui, Font, s15 cWhite Bold, Segoe UI
-Gui, Add, Text, x35 y13 w600 h30 BackgroundTrans c0xFFAA00 vTitleText, aery's biome macro v1.2
-Gui, Font, s9 cWhite Normal, Segoe UI
-Gui, Color, 041024
-Gui, Font, s10 cWhite Normal Bold
+Gui, Color, 0B0F1A
+Gui, Margin, 0, 0
 
-Gui, Add, Text, x35 y45 w150 h25 BackgroundTrans, Private Server Link:
-Gui, Add, Edit, x35 y70 w415 h25 vPrivateServerInput gUpdatePrivateServer Background0xD3D3D3 cBlack, %privateServerLink%
-Gui, Font, s8 c0xCCCCCC Normal
-Gui, Add, Text, x35 y95 w500 h15 BackgroundTrans, Paste your Roblox Private Sever Link here.
+Gui, Font, s18 cFFAA00 Bold, Segoe UI
+Gui, Add, Text, x35 y14 w440 h36 BackgroundTrans vTitleText, aery's biome macro v1.3
 
-Gui, Font, s10 cWhite Normal Bold
-Gui, Add, Text, x35 y110 w200 h25 BackgroundTrans, Discord Webhook URL:
-Gui, Add, Edit, x35 y135 w415 h25 vWebhookInput gUpdateWebhook Background0xD3D3D3 cBlack, %webhookURL%
-Gui, Font, s8 c0xCCCCCC Normal
-Gui, Add, Text, x35 y160 w500 h15 BackgroundTrans, Paste your Discord Webhook URL here.
-
-Gui, Font, s11 cWhite Bold, Segoe UI
-Gui, Add, Button, x35 y185 w150 h25 gClearLogs, Clear Roblox Logs
-
-Gui, Font, s11 cWhite Bold, Segoe UI
-Gui, Add, GroupBox, x33 y215 w350 h68 cWhite, Show Runtime
-Gui, Font, s10 c0xCCCCCC Normal
-Gui, Add, Text, x43 y231 w515 h135 BackgroundTrans, Displays your macro's runtime via the biome webhooks.
+Gui, Add, Progress, x20 y60 w440 h88 Background131A2B Disabled
 Gui, Font, s10 cWhite Bold, Segoe UI
-Gui, Add, Button, x43 y251 w80 h25 gToggleDisplayRuntime vDisplayRuntimeBtn, Toggle
-Gui, Font, s10 c0xCCCCCC Bold, Segoe UI
-Gui, Add, Text, x133 y253 w70 h25 vDisplayRuntimeStatus BackgroundTrans, OFF
+Gui, Add, Text, x35 y69 w300 h20 BackgroundTrans, Private Server Link
+Gui, Font, s10 cBlack Bold, Segoe UI
+Gui, Add, Edit, x35 y92 w410 h26 -E0x200 +Border BackgroundWhite vPrivateServerInput gUpdatePrivateServer, %privateServerLink%
+Gui, Font, s8 c8892A6 Normal, Segoe UI
+Gui, Add, Text, x35 y124 w410 h16 BackgroundTrans, Paste your Roblox Private Server link here.
+
+Gui, Add, Progress, x20 y160 w440 h88 Background131A2B Disabled
+Gui, Font, s10 cWhite Bold, Segoe UI
+Gui, Add, Text, x35 y168 w300 h20 BackgroundTrans, Discord Webhook URL
+Gui, Font, s10 cBlack Bold, Segoe UI
+Gui, Add, Edit, x35 y193 w410 h26 -E0x200 +Border BackgroundWhite vWebhookInput gUpdateWebhook, %webhookURL%
+Gui, Font, s8 c8892A6 Normal, Segoe UI
+Gui, Add, Text, x35 y224 w410 h16 BackgroundTrans, Paste your Discord Webhook URL here.
+
+Gui, Add, Progress, x20 y260 w440 h66 Background131A2B Disabled
+Gui, Font, s10 cWhite Bold, Segoe UI
+Gui, Add, Text, x35 y270 w120 h20 BackgroundTrans, Show Runtime
+Gui, Font, s10 c0xFF4444  Bold, Segoe UI
+Gui, Add, Text, x140 y270 w60 h20 BackgroundTrans vDisplayRuntimeStatus, OFF
+Gui, Font, s8 c8892A6 Normal, Segoe UI
+Gui, Add, Text, x35 y294 w310 h26 BackgroundTrans, Displays your macro's runtime through biome webhooks.
+Gui, Font, s10 cWhite Bold, Segoe UI
+Gui, Add, Text, x365 y278 w80 h30 Center +0x200 Background1B2438 gToggleDisplayRuntime vDisplayRuntimeBtn, Toggle
+
+Gui, Font, s10 cWhite Bold, Segoe UI
+Gui, Add, Progress, x20 y335 w170 h41 Center Background131A2B Disabled
+Gui, Add, Text, x25 y340 w160 h32 Center +0x200 Background131A2B gClearLogs, Clear Roblox Logs
 
 Gui, Font, s13 cWhite Bold, Segoe UI
-Gui, Add, Button, x35 y295 w70 h35 gStartScript vStartBtn c0x00AA00 +0x8000, Start
-Gui, Add, Button, x115 y295 w70 h35 gStopScript vStopBtn Disabled c0xFF4444 +0x8000, Stop
+Gui, Add, Text, x20  y388 w140 h42 Center +0x200 Background00C26E gStartScript vStartBtn, ▶  Start
+Gui, Add, Text, x170 y388 w140 h42 Center +0x200 BackgroundE0A100 gPauseScript vPauseBtn, ⏸  Pause
+Gui, Add, Text, x320 y388 w140 h42 Center +0x200 Background3A2030 gStopScript vStopBtn Disabled, ■  Stop
 
 if (displayRuntime) {
     GuiControl,, DisplayRuntimeStatus, ON
@@ -100,12 +112,13 @@ if (displayRuntime) {
     GuiControl, +c0xFF4444, DisplayRuntimeStatus
 }
 
-Gui, Show, w500 h350,  aery's biome macro v1.2
+Gui, Show, w480 h450, aery's biome macro v1.3
 GuiControl, Focus, StartBtn
 return
 
 GuiClose:
 GoSub, StopScript
+return
 
 UpdatePrivateServer:
     Gui, Submit, NoHide
@@ -132,6 +145,8 @@ ToggleDisplayRuntime:
 return
 
 ClearLogs:
+    EnvGet, TempDir, TEMP
+    robloxCache := TempDir "\roblox"
     Process, Exist, RobloxCrashHandler.exe
     if (ErrorLevel) {
         Process, Close, RobloxCrashHandler.exe
@@ -139,10 +154,13 @@ ClearLogs:
     sleep, 25
     FileDelete, %logDir%\*.log
     FileDelete, %ROBLOX_LOGS%
+    if FileExist(robloxCache) {
+        FileRemoveDir, %robloxCache%, 1
+    }
 return
 
 BiomeDetect:
-global webhookURL, biome, prevBiome, logDir, runTime
+global webhookURL, biome, prevBiome, logDir
 
     newestTime := 0
     newestFile := ""
@@ -184,12 +202,14 @@ global webhookURL, biome, prevBiome, logDir, runTime
     }
 
     if (biome && biome != "" && biome != prevBiome) {
-        runTime := runTimeTick ? (A_TickCount - runTimeTick) // 1000 : 0
+        runTime := GetRuntime()
         runTimeDisplay := FormatRuntime(runTime)
         ; end webhook
         if ((prevBiome != "" && prevBiome != "Normal") && (biome != prevBiome)) {
             if (biomeData.HasKey(prevBiome)) {
                 endColor := biomeData[prevBiome].color
+            } else {
+                endColor := 0
             }
 
             endwebhookTime := A_NowUTC
@@ -209,7 +229,7 @@ global webhookURL, biome, prevBiome, logDir, runTime
             . "    ""title"": ""<t:" endwebhookUnix ":F> (<t:" endwebhookUnix ":R>)"","
             . "    ""description"": """ enddescription ""","
             . "    ""color"": " biomeColor ","
-            . "    ""footer"": {""text"": ""aery's biome macro | v1.2"", ""icon_url"": ""https://raw.githubusercontent.com/knowaery/Aery-s-Fishsol/files/img/aery.png""},"
+            . "    ""footer"": {""text"": ""aery's biome macro | v1.3"", ""icon_url"": ""https://github.com/knowaery/Aery-s-fishSol/raw/main/files/img/aery.png""},"
             . "    ""timestamp"": """ endTimestamp """"
             . "  }"
             . "],"
@@ -228,6 +248,9 @@ global webhookURL, biome, prevBiome, logDir, runTime
             if (biomeData.HasKey(biome)) {
                 biomeColor    := biomeData[biome].color
                 thumbnail_url := biomeData[biome].thumbnail
+            } else {
+                biomeColor := 0
+                thumbnail_url := ""
             }
 
             startwebhookTime := A_NowUTC
@@ -236,13 +259,13 @@ global webhookURL, biome, prevBiome, logDir, runTime
             EnvSub, startwebhookUnix, 19700101000000, Seconds
 
 
-            if (biome = "GLITCHED" || biome = "DREAMSPACE" || biome = "CYBERSPACE") && (state != "In Main Menu") {
-                content := "<@everyone>"
-            } else if (biome = "GLITCHED" || biome = "DREAMSPACE" || biome = "CYBERSPACE") && (state = "In Main Menu") {
+            if (running) && (biome = "GLITCHED" || biome = "DREAMSPACE" || biome = "CYBERSPACE") && (state != "In Main Menu") {
+                content := "@everyone"
+            } else if (running) && (InArray(subBiomes, biome) || InArray(rareBiomes, biome)) && (state = "In Main Menu") {
                 SetTimer, BiomeDetect, Off
-                StopMacroWebhook()
                 running := false
-                MsgBox, 16, Error, Rare Biome deteced whilst being in Main Menu. The macro has automatically closed.
+                StopMacroWebhook()
+                MsgBox, 16, Error, Rare Biome deteced whilst being in Main Menu. The macro has automatically closed to prevent an accidental webhook.
                 ExitApp
                 return
             } else {
@@ -262,24 +285,25 @@ global webhookURL, biome, prevBiome, logDir, runTime
             . "    ""description"": """ description ""","
             . "    ""color"": " biomeColor ","
             . "    ""thumbnail"": {""url"": """ thumbnail_url """},"
-            . "    ""footer"": {""text"": ""aery's biome macro | v1.2"", ""icon_url"": ""https://raw.githubusercontent.com/knowaery/Aery-s-Fishsol/files/img/aery.png""},"
+            . "    ""footer"": {""text"": ""aery's biome macro | v1.3"", ""icon_url"": ""https://github.com/knowaery/Aery-s-fishSol/raw/main/files/img/aery.png""},"
             . "    ""timestamp"": """ startTimestamp """"
             . "  }"
             . "],"
             . """content"": """ content """"
             . "}"
-
-            try http := ComObjCreate("WinHttp.WinHttpRequest.5.1")
-            try http.Open("POST", webhookURL, false)
-            try http.SetRequestHeader("Content-Type", "application/json")
-            try http.Send(json)
+            if (running) {
+                try http := ComObjCreate("WinHttp.WinHttpRequest.5.1")
+                try http.Open("POST", webhookURL, false)
+                try http.SetRequestHeader("Content-Type", "application/json")
+                try http.Send(json)
+            }
         }
         prevBiome := biome
     }
 return
 
 StartMacroWebhook() {
-    global webhookURL
+    global webhookURL, paused
     if (!InStr(webhookURL, "discord"))
         return
 
@@ -288,14 +312,57 @@ StartMacroWebhook() {
     content := ""
     color := 7909721
 
+    if (paused) {
+        title := ":green_circle: Macro Resumed!"
+    } else {
+        title := ":green_circle: Macro Started!"
+    }
+
     json := "{"
     . """content"": """ content ""","
     . """embeds"": [{"
-    . """title"": "":green_circle: Macro Started!"","
+    . """title"": """ title ""","
     . """color"": " color ","
     . """footer"": {"
-    . """text"": ""aery's biome macro | v1.2"","
-    . """icon_url"": ""https://raw.githubusercontent.com/knowaery/Aery-s-Fishsol/files/img/aery.png"""
+    . """text"": ""aery's biome macro | v1.3"","
+    . """icon_url"": ""https://github.com/knowaery/Aery-s-fishSol/raw/main/files/img/aery.png"""
+    . "},"
+    . """timestamp"": """ timestamp """"
+    . "}]"
+    . "}"
+
+    try http := ComObjCreate("WinHttp.WinHttpRequest.5.1")
+    try http.Open("POST", webhookURL, false)
+    try http.SetRequestHeader("Content-Type", "application/json")
+    try http.Send(json)
+}
+
+PauseMacroWebhook() {
+    global webhookURL, displayRuntime, runTimeTick
+    if (!InStr(webhookURL, "discord"))
+        return
+
+    endMacroTime := A_NowUTC
+    timestamp := SubStr(endMacroTime,1,4) "-" SubStr(endMacroTime,5,2) "-" SubStr(endMacroTime,7,2) "T" SubStr(endMacroTime,9,2) ":" SubStr(endMacroTime,11,2) ":" SubStr(endMacroTime,13,2) ".000Z"
+    content := ""
+    color := 16632664
+
+    if (displayRuntime) {
+        totalRuntime := FormatRuntime(GetRuntime())
+        description := "> Current " totalRuntime "  "
+    } else {
+        description := ""
+    }
+
+    json := "{"
+    . """content"": """ content ""","
+    . """embeds"": [{"
+    . """title"": "":yellow_circle: Macro Paused!"","
+    . """description"": """ description ""","
+    . """color"": " color ","
+    . """footer"": {"
+    . """text"": ""aery's biome macro | v1.3"","
+    . """icon_url"": ""https://github.com/knowaery/Aery-s-fishSol/raw/main/files/img/aery.png"""
     . "},"
     . """timestamp"": """ timestamp """"
     . "}]"
@@ -318,7 +385,7 @@ StopMacroWebhook() {
     color := 14495300
 
     if (displayRuntime) {
-        totalRuntime := FormatRuntime((A_TickCount - runTimeTick) // 1000)
+        totalRuntime := FormatRuntime(GetRuntime())
         description := "> Total " totalRuntime "  "
     } else {
         description := ""
@@ -331,8 +398,8 @@ StopMacroWebhook() {
     . """description"": """ description ""","
     . """color"": " color ","
     . """footer"": {"
-    . """text"": ""aery's biome macro | v1.2"","
-    . """icon_url"": ""https://raw.githubusercontent.com/knowaery/Aery-s-Fishsol/files/img/aery.png"""
+    . """text"": ""aery's biome macro | v1.3"","
+    . """icon_url"": ""https://github.com/knowaery/Aery-s-fishSol/raw/main/files/img/aery.png"""
     . "},"
     . """timestamp"": """ timestamp """"
     . "}]"
@@ -348,25 +415,47 @@ StartScript:
 if (running)
     return
 
-running := true
+    running := true
+    if (pausedTick) {
+        pausedTotal += A_TickCount - pausedTick
+        pausedTick := 0
+    } else {
+        runTimeTick := A_TickCount
+        pausedTotal := 0
+    }
     SetTimer, BiomeDetect, 1000
     StartMacroWebhook()
     GuiControl, Disable, StartBtn
     GuiControl, Enable, StopBtn
-    GuiControl,, TitleText, aery's biome macro v1.2 (running)
-    WinSetTitle, aery's biome macro v1.2, , aery's biome macro v1.2 (running)
+    GuiControl, Enable, PauseBtn
+    GuiControl,, TitleText, aery's biome macro v1.3 (running)
+    WinSetTitle, aery's biome macro v1.3, , aery's biome macro v1.3 (running)
     GuiControl, Focus, StopBtn
-    runTimeTick := A_TickCount
+    paused := false
+return
+
+PauseScript:
+if (!running)
+    return
+
+    running := false
+    paused := true
+    pausedTick := A_TickCount
+    SetTimer, BiomeDetect, Off
+    PauseMacroWebhook()
+    GuiControl, Enable, StartBtn
+    GuiControl, Disable, PauseBtn
+    GuiControl,, TitleText, aery's biome macro v1.3 (paused)
+    WinSetTitle, aery's biome macro v1.3 (running), , aery's biome macro v1.3 (paused)
 return
 
 StopScript:
-if (!running)
-    ExitApp
-
-running := false
-    SetTimer, BiomeDetect, Off
-
-    StopMacroWebhook()
+    if (running || paused) {
+        running := false
+        paused := false
+        SetTimer, BiomeDetect, Off
+        StopMacroWebhook()
+    }
     ExitApp
 return
 
@@ -381,4 +470,19 @@ FormatRuntime(runTime) {
         out .= m "m "
     out .= s "s"
     return "Runtime: " out
+}
+
+GetRuntime() {
+    global runTimeTick, pausedTick, pausedTotal
+    if (!runTimeTick)
+        return 0
+    now := pausedTick ? pausedTick : A_TickCount
+    return (now - runTimeTick - pausedTotal) // 1000
+}
+
+InArray(var, val) {
+    for index, item in var
+        if (item = val)
+            return true
+    return false
 }
